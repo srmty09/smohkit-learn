@@ -1,5 +1,3 @@
-#include <cstddef>
-#include <memory>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <vector>
@@ -7,7 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <iostream>
-#include <numeric>  // for accumulate
+#include <numeric>
 
 namespace py = pybind11;
 typedef long long ll;
@@ -18,40 +16,35 @@ private:
     vector<vector<double>*> vec_ptrs;
 
 public:
-    // 1. Create array from std::vector<double>
     vector<double>* array(vector<double>& vec) {
         vector<double>* data = new vector<double>(vec);
         vec_ptrs.push_back(data);
         return data;
     }
 
-    // 2. Print vector contents
     void print(vector<double>* ptr) {
         if (!ptr) throw invalid_argument("Null pointer in print");
         vector<double>& data = *ptr;
         cout << "[";
         for (size_t i = 0; i < data.size(); ++i) {
             cout << data[i];
-            if (i + 1 != data.size()) cout << ", ";
+            if (i+1 != data.size()) cout << ", ";
         }
         cout << "] (type: dumpy array)" << endl;
     }
 
-    // 3. Zeros vector
     vector<double>* zeros(ll n) {
         vector<double>* vec = new vector<double>(n, 0.0);
         vec_ptrs.push_back(vec);
         return vec;
     }
 
-    // 4. Ones vector
     vector<double>* ones(ll n) {
         vector<double>* vec = new vector<double>(n, 1.0);
         vec_ptrs.push_back(vec);
         return vec;
     }
 
-    // 5. Arange vector (start, end, step)
     vector<double>* arange(double start, double end, double step=1.0) {
         if (step == 0) throw invalid_argument("Step cannot be zero");
         vector<double>* vec = new vector<double>();
@@ -66,7 +59,6 @@ public:
         return vec;
     }
 
-    // 6. Linspace (start, end, nums)
     vector<double>* linspace(double start, double end, ll nums) {
         if (nums <= 1) throw invalid_argument("nums must be > 1");
         vector<double>* vec = new vector<double>();
@@ -77,12 +69,11 @@ public:
         return vec;
     }
 
-    // 7. Add two vectors element-wise
     vector<double>* add(vector<double>* a, vector<double>* b) {
         check_null(a, b);
-        vector<double>& va = *a;
-        vector<double>& vb = *b;
-        size_t n = std::min(va.size(), vb.size()); // Use std::min instead of min
+        vector<double>&va=*a;
+        vector<double>&vb=*b;
+        size_t n = min(va.size(), vb.size());
         vector<double>* res = new vector<double>();
         for (size_t i = 0; i < n; i++)
             res->push_back(va[i] + vb[i]);
@@ -90,12 +81,11 @@ public:
         return res;
     }
 
-    // 8. Subtract two vectors element-wise
     vector<double>* sub(vector<double>* a, vector<double>* b) {
         check_null(a, b);
-        vector<double>& va = *a;
-        vector<double>& vb = *b;
-        size_t n = std::min(va.size(), vb.size()); // Use std::min instead of min
+        vector<double>&va=*a;
+        vector<double>&vb=*b;
+        size_t n = min(va.size(), vb.size());
         vector<double>* res = new vector<double>();
         for (size_t i = 0; i < n; i++)
             res->push_back(va[i] - vb[i]);
@@ -103,12 +93,11 @@ public:
         return res;
     }
 
-    // 9. Multiply two vectors element-wise
     vector<double>* mul(vector<double>* a, vector<double>* b) {
         check_null(a, b);
-        vector<double>& va = *a;
-        vector<double>& vb = *b;
-        size_t n = std::min(va.size(), vb.size()); // Use std::min instead of min
+        vector<double>&va=*a;
+        vector<double>&vb=*b;
+        size_t n = min(va.size(), vb.size());
         vector<double>* res = new vector<double>();
         for (size_t i = 0; i < n; i++)
             res->push_back(va[i] * vb[i]);
@@ -116,12 +105,11 @@ public:
         return res;
     }
 
-    // 10. Divide two vectors element-wise
     vector<double>* div(vector<double>* a, vector<double>* b) {
         check_null(a, b);
-        vector<double>& va = *a;
-        vector<double>& vb = *b;
-        size_t n = std::min(va.size(), vb.size()); // Use std::min instead of min
+        vector<double>&va=*a;
+        vector<double>&vb=*b;
+        size_t n = min(va.size(), vb.size());
         vector<double>* res = new vector<double>();
         for (size_t i = 0; i < n; i++) {
             if (vb[i] == 0) throw invalid_argument("Division by zero");
@@ -131,27 +119,24 @@ public:
         return res;
     }
 
-    // 11. Dot product of two vectors
     double dot(vector<double>* a, vector<double>* b) {
         check_null(a, b);
         vector<double>& va = *a;
         vector<double>& vb = *b;
-        size_t n = std::min(va.size(), vb.size()); // Use std::min instead of min
+        size_t n = min(va.size(), vb.size());
         double res = 0;
         for (size_t i = 0; i < n; i++)
             res += va[i] * vb[i];
         return res;
     }
 
-    // 12. Mean of vector
     double mean(vector<double>* a) {
         check_null(a);
         if (a->empty()) throw invalid_argument("Empty vector in mean");
-        double sum = std::accumulate(a->begin(), a->end(), 0.0);
+        double sum = accumulate(a->begin(), a->end(), 0.0);
         return sum / a->size();
     }
 
-    // 13. Median of vector
     double median(vector<double>* a) {
         check_null(a);
         if (a->empty()) throw invalid_argument("Empty vector in median");
@@ -165,7 +150,6 @@ public:
         }
     }
 
-    // 14. Standard deviation
     double std(vector<double>* a) {
         check_null(a);
         if (a->empty()) throw invalid_argument("Empty vector in std");
@@ -173,17 +157,15 @@ public:
         double accum = 0;
         for (auto val : *a)
             accum += (val - m) * (val - m);
-        return std::sqrt(accum / a->size()); // Use std::sqrt instead of sqrt function
+        return std::sqrt(accum / a->size());
     }
 
-    // 15. Variance
     double var(vector<double>* a) {
         check_null(a);
         double s = std(a);
         return s * s;
     }
 
-    // 16. Sort vector and return new vector
     vector<double>* sort(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>(*a);
@@ -192,7 +174,6 @@ public:
         return res;
     }
 
-    // 17. Unique elements vector
     vector<double>* unique(vector<double>* a) {
         check_null(a);
         vector<double> tmp = *a;
@@ -203,27 +184,23 @@ public:
         return res;
     }
 
-    // 18. Maximum element
     double max(vector<double>* a) {
         check_null(a);
         if (a->empty()) throw invalid_argument("Empty vector in max");
         return *std::max_element(a->begin(), a->end());
     }
 
-    // 19. Minimum element - renamed to avoid conflict
     double min_element(vector<double>* a) {
         check_null(a);
         if (a->empty()) throw invalid_argument("Empty vector in min");
         return *std::min_element(a->begin(), a->end());
     }
 
-    // 20. Sum all elements
     double sum(vector<double>* a) {
         check_null(a);
-        return std::accumulate(a->begin(), a->end(), 0.0);
+        return accumulate(a->begin(), a->end(), 0.0);
     }
 
-    // 21. Absolute value (element-wise)
     vector<double>* abs(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -232,7 +209,6 @@ public:
         return res;
     }
 
-    // 22. Power (element-wise, raise each to scalar exponent)
     vector<double>* pow(vector<double>* a, double exponent) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -241,7 +217,6 @@ public:
         return res;
     }
 
-    // 23. Square root (element-wise)
     vector<double>* sqrt(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -253,7 +228,6 @@ public:
         return res;
     }
 
-    // 24. Floor (element-wise)
     vector<double>* floor(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -262,7 +236,6 @@ public:
         return res;
     }
 
-    // 25. Ceil (element-wise)
     vector<double>* ceil(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -271,7 +244,6 @@ public:
         return res;
     }
 
-    // 26. Round (element-wise)
     vector<double>* round(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -280,7 +252,6 @@ public:
         return res;
     }
 
-    // 27. Clip (element-wise) - clip values between low and high
     vector<double>* clip(vector<double>* a, double low, double high) {
         check_null(a);
         if (low > high) throw invalid_argument("low must be <= high in clip");
@@ -294,10 +265,9 @@ public:
         return res;
     }
 
-    // 28. Logical AND (element-wise, vectors treated as bool)
     vector<double>* logical_and(vector<double>* a, vector<double>* b) {
         check_null(a, b);
-        size_t n = std::min(a->size(), b->size()); // Use std::min instead of min
+        size_t n = min(a->size(), b->size());
         vector<double>* res = new vector<double>();
         for (size_t i = 0; i < n; i++)
             res->push_back((*a)[i] != 0 && (*b)[i] != 0 ? 1.0 : 0.0);
@@ -305,10 +275,9 @@ public:
         return res;
     }
 
-    // 29. Logical OR (element-wise)
     vector<double>* logical_or(vector<double>* a, vector<double>* b) {
         check_null(a, b);
-        size_t n = std::min(a->size(), b->size()); // Use std::min instead of min
+        size_t n = min(a->size(), b->size());
         vector<double>* res = new vector<double>();
         for (size_t i = 0; i < n; i++)
             res->push_back((*a)[i] != 0 || (*b)[i] != 0 ? 1.0 : 0.0);
@@ -316,7 +285,6 @@ public:
         return res;
     }
 
-    // 30. Logical NOT (element-wise)
     vector<double>* logical_not(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -325,7 +293,6 @@ public:
         return res;
     }
 
-    // 31. Exponential (element-wise e^x)
     vector<double>* exp(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -334,7 +301,6 @@ public:
         return res;
     }
 
-    // 32. Logarithm (element-wise natural log)
     vector<double>* log(vector<double>* a) {
         check_null(a);
         vector<double>* res = new vector<double>();
@@ -347,7 +313,6 @@ public:
     }
 
 private:
-    // Helper: Check pointers for null
     void check_null(vector<double>* a) {
         if (!a) throw invalid_argument("Null pointer passed");
     }
@@ -356,7 +321,6 @@ private:
     }
 
 public:
-    // Destructor to clean all allocated vectors
     ~dumpy() {
         for (auto p : vec_ptrs) delete p;
     }
@@ -377,7 +341,7 @@ PYBIND11_MODULE(ENGINE, m) {
         .def("std", &dumpy::std)
         .def("var", &dumpy::var)
         .def("max", &dumpy::max)
-        .def("min", &dumpy::min_element)  // Updated binding name
+        .def("min", &dumpy::min_element)
         .def("sort", &dumpy::sort, py::return_value_policy::reference)
         .def("unique", &dumpy::unique, py::return_value_policy::reference)
         .def("add", &dumpy::add, py::return_value_policy::reference)
