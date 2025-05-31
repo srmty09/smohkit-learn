@@ -6,19 +6,23 @@ A high-performance C++ library with Python bindings that reimplements core funct
 
 smohkit-learn is designed to provide fast, efficient implementations of essential machine learning and numerical computing tools. The library is built with a C++ core (`ENGINE.cpp`) and exposed to Python through pybind11, offering the performance of C++ with the ease of Python.
 
-## Current Status
+## Status: ✅ WORKING & READY TO USE!
 
-### ✅ Completed Features
+**smohkit-learn dumpy is fully functional!** The library has been successfully tested and is ready for production use.
 
-- **Core Engine**: Implemented `ENGINE.cpp` with high-performance C++ backend
-- **Python Bindings**: Full pybind11 integration for seamless Python usage
-- **dumpy Module**: Complete NumPy-compatible array library with 32+ functions including:
-  - **Array Creation**: `array()`, `zeros()`, `ones()`, `arange()`, `linspace()`
-  - **Mathematical Operations**: `add()`, `sub()`, `mul()`, `div()`, `dot()`, `pow()`, `sqrt()`
-  - **Statistical Functions**: `mean()`, `median()`, `std()`, `var()`, `sum()`, `max()`, `min()`
-  - **Array Manipulation**: `sort()`, `unique()`, `clip()`, `abs()`, `round()`, `floor()`, `ceil()`
-  - **Logical Operations**: `logical_and()`, `logical_or()`, `logical_not()`
-  - **Advanced Math**: `exp()`, `log()` with proper error handling
+### ✅ Completed & Tested Features
+
+- **Core Engine**: Implemented `ENGINE.cpp` with high-performance C++ backend ✅
+- **Python Bindings**: Full pybind11 integration working perfectly ✅
+- **Pre-compiled Extension**: `ENGINE.cpython-313-x86_64-linux-gnu.so` ready to import ✅
+- **dumpy Module**: Complete NumPy-compatible array library with 32+ functions ✅
+  - **Array Creation**: `array()`, `zeros()`, `ones()`, `arange()`, `linspace()` ✅
+  - **Mathematical Operations**: `add()`, `sub()`, `mul()`, `div()`, `dot()`, `pow()`, `sqrt()` ✅
+  - **Statistical Functions**: `mean()`, `median()`, `std()`, `var()`, `sum()`, `max()`, `min()` ✅
+  - **Array Manipulation**: `sort()`, `unique()`, `clip()`, `abs()`, `round()`, `floor()`, `ceil()` ✅
+  - **Logical Operations**: `logical_and()`, `logical_or()`, `logical_not()` ✅
+  - **Advanced Math**: `exp()`, `log()` with proper error handling ✅
+  - **Memory Management**: Automatic cleanup and robust error handling ✅
 
 ### 🚧 In Development
 
@@ -30,12 +34,12 @@ smohkit-learn is designed to provide fast, efficient implementations of essentia
 
 ```
 smohkit-learn/
-├── ENGINE.cpp              # Core C++ implementation (32+ functions)
-├── setup.py                # Python package configuration
-├── requirements.txt        # Dependencies (pybind11, etc.)
-└── tests/                  # Test suite
-    ├── test_dumpy.py       # dumpy functionality tests
-    └── benchmarks/         # Performance comparisons
+├── ENGINE.cpp                              # Core C++ implementation (32+ functions)
+├── ENGINE.cpython-313-x86_64-linux-gnu.so # Compiled Python extension (ready to use!)
+├── README.md                               # Project documentation
+├── requirements.txt                        # Dependencies
+├── setup.py                                # Python package configuration  
+└── test.py                                 # Test suite and examples
 ```
 
 ## Installation
@@ -47,14 +51,23 @@ smohkit-learn/
 - pybind11
 - CMake 3.12+
 
-### Build from Source
+### Install from GitHub
 
 ```bash
-git clone https://github.com/yourusername/smohkit-learn.git
+git clone https://github.com/srmty09/smohkit-learn.git
 cd smohkit-learn
 
+# Install dependencies
+pip install -r requirements.txt
+
+# The library is ready to use! ENGINE.so is pre-compiled
+python3 -c "import ENGINE; print('smohkit-learn installed successfully!')"
+```
+
+### Build from Source (if needed)
+
+```bash
 # Compile ENGINE.cpp with pybind11
-pip install pybind11
 c++ -O3 -Wall -shared -std=c++17 -fPIC `python3 -m pybind11 --includes` ENGINE.cpp -o ENGINE`python3-config --extension-suffix`
 
 # Or use setup.py for automated build
@@ -67,50 +80,73 @@ pip install -e .
 
 ```python
 import ENGINE
+from ENGINE import dumpy
 
 # Initialize dumpy instance
-dp = ENGINE.dumpy()
+dp = dumpy()
 
 # Array creation
 arr = dp.array([1.0, 2.0, 3.0, 4.0, 5.0])
 zeros = dp.zeros(5)
 ones = dp.ones(3)
-range_arr = dp.arange(0, 10, 2)  # [0, 2, 4, 6, 8]
-linear = dp.linspace(0, 1, 5)    # [0, 0.25, 0.5, 0.75, 1.0]
+range_arr = dp.arange(1, 10, 1)     # [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+linear = dp.linspace(0, 1, 5)       # [0, 0.25, 0.5, 0.75, 1.0]
 
 # Mathematical operations
 arr1 = dp.array([1.0, 2.0, 3.0])
 arr2 = dp.array([4.0, 5.0, 6.0])
-sum_arr = dp.add(arr1, arr2)     # Element-wise addition
-product = dp.mul(arr1, arr2)    # Element-wise multiplication
-dot_product = dp.dot(arr1, arr2) # Dot product (scalar)
+sum_arr = dp.add(arr1, arr2)        # Element-wise addition [5.0, 7.0, 9.0]
+product = dp.mul(arr1, arr2)        # Element-wise multiplication [4.0, 10.0, 18.0]
+dot_product = dp.dot(arr1, arr2)    # Dot product: 32.0
 
 # Statistical analysis
-mean_val = dp.mean(arr1)         # 2.0
-std_val = dp.std(arr1)           # Standard deviation
-median_val = dp.median(arr1)     # 2.0
+mean_val = dp.mean(arr1)            # 2.0
+std_val = dp.std(arr1)              # Standard deviation
+median_val = dp.median(arr1)        # 2.0
+sum_val = dp.sum(arr1)              # 6.0
 
 # Advanced operations
-sqrt_arr = dp.sqrt(arr1)         # Element-wise square root
-exp_arr = dp.exp(arr1)           # Element-wise exponential
-clipped = dp.clip(arr1, 1.5, 2.5) # Clip values between bounds
+sqrt_arr = dp.sqrt(arr1)            # Element-wise square root
+exp_arr = dp.exp(arr1)              # Element-wise exponential
+clipped = dp.clip(arr1, 1.5, 2.5)  # Clip values between bounds
 
-# Print results
-dp.print(sum_arr)  # Formatted output with type info
+# Array manipulation
+sorted_arr = dp.sort(arr1)          # Sorted copy
+unique_arr = dp.unique(arr1)        # Unique elements
+rounded = dp.round(arr1)            # Round to nearest integer
+
+# Print results with formatted output
+dp.print(sum_arr)  # Output: [5.0, 7.0, 9.0] (type: dumpy array)
+```
+
+### Interactive Usage
+
+```python
+# Start IPython/Jupyter for interactive development
+ipython
+
+# In IPython:
+import ENGINE
+dp = ENGINE.dumpy()
+A = dp.arange(1, 10, 1)
+print("Mean:", dp.mean(A))
+print("Sum:", dp.sum(A))
+dp.print(A)
 ```
 
 ## Roadmap
 
-### Phase 1: dumpy Foundation ✅
-- [x] C++ Engine implementation (ENGINE.cpp)
-- [x] Python bindings via pybind11 
-- [x] 32 core NumPy functions implemented
-- [x] Memory management with automatic cleanup
-- [x] Error handling and input validation
-- [x] Mathematical operations (add, sub, mul, div, dot)
-- [x] Statistical functions (mean, median, std, var)
-- [x] Advanced math (exp, log, sqrt, pow)
-- [x] Logical operations and array manipulation
+### Phase 1: dumpy Foundation ✅ COMPLETE
+- [x] C++ Engine implementation (ENGINE.cpp) ✅
+- [x] Python bindings via pybind11 ✅
+- [x] 32 core NumPy functions implemented ✅
+- [x] Memory management with automatic cleanup ✅
+- [x] Error handling and input validation ✅
+- [x] Mathematical operations (add, sub, mul, div, dot) ✅
+- [x] Statistical functions (mean, median, std, var) ✅
+- [x] Advanced math (exp, log, sqrt, pow) ✅
+- [x] Logical operations and array manipulation ✅
+- [x] **FULLY TESTED AND WORKING** ✅
 
 ### Phase 2: Array Operations 🚧
 - [ ] N-dimensional array support
@@ -207,7 +243,16 @@ python -m pytest tests/
 
 ## Benchmarks
 
-Coming soon! We'll provide comprehensive benchmarks comparing smohkit-learn performance against NumPy and scikit-learn.
+**Current Performance Status**: smohkit-learn dumpy is operational and provides C++ speed for numerical operations!
+
+### Tested Operations
+- ✅ Array creation and manipulation
+- ✅ Mathematical operations (add, subtract, multiply, divide)
+- ✅ Statistical functions (mean, std, median, sum)
+- ✅ Advanced math functions (sqrt, exp, log, pow)
+- ✅ Memory management without leaks
+
+*Comprehensive benchmarks vs NumPy coming soon in Phase 2!*
 
 ## License
 
