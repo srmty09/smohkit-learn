@@ -1,3 +1,6 @@
+#include <cstddef>
+#include <iterator>
+#include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <vector>
@@ -326,6 +329,87 @@ public:
     }
 };
 
+
+struct TensorData {
+    vector<double>* data;
+    ll size;
+    vector<ll> stride;
+    ll ndim;
+};
+
+class sytorch {
+private:
+    vector<TensorData*> tensor_ptrs;
+    vector<ll> shape_vec;
+    vector<ll> stride_vec;
+    
+    ll total_elements;
+public:
+    sytorch() : total_elements(1) {}
+    
+    TensorData* tensor(const py::object& input) {
+        vector<double> flat_data;
+        vector<ll> dimensions;
+        extract_data_and_shape(input, flat_data, dimensions, 0);
+        
+        shape_vec = dimensions;
+        total_elements = 1;
+        for (auto dim : shape_vec) {
+            total_elements *= dim;
+        }
+        calculate_strides();
+        
+        vector<double>* data = new vector<double>(flat_data);
+        TensorData* tensor_ptr = new TensorData();
+        tensor_ptr->data = data;
+        tensor_ptr->size = total_elements;
+        tensor_ptr->stride = stride_vec;
+        tensor_ptr->ndim = shape_vec.size();
+        tensor_ptrs.push_back(tensor_ptr);
+        
+        return tensor_ptr;
+    }
+
+private:
+    void extract_data_and_shape(const py::object& obj, vector<double>& data, 
+                               vector<ll>& shape, ll depth) {
+        if (py::isinstance<py::list>(obj)) {
+            py::list lst = obj.cast<py::list>();
+            ll size = lst.size();
+            
+            if (depth >= static_cast<ll>(shape.size())) {
+                shape.push_back(size);
+            }
+            for (ll i = 0; i < size; i++) {
+                extract_data_and_shape(lst[i], data, shape, depth + 1);
+            }
+        }
+        else if (py::isinstance<py::float_>(obj) || py::isinstance<py::int_>(obj)) {
+            data.push_back(obj.cast<double>());
+        }
+        else {
+            throw std::runtime_error("Unsupported data type in input array");
+        }
+    }
+  
+    void calculate_strides() {
+        stride_vec.resize(shape_vec.size());
+        ll stride = 1;
+        for(ll i = shape_vec.size() - 1; i >= 0; i--) {
+            stride_vec[i] = stride;
+            stride *= shape_vec[i];
+        }
+    }
+    
+public:
+    ~sytorch() {
+        for (auto p : tensor_ptrs) {
+            delete p->data;  
+            delete p;        
+        }
+    }
+};
+
 PYBIND11_MODULE(ENGINE, m) {
     py::class_<dumpy>(m, "dumpy")
         .def(py::init<>())
@@ -361,4 +445,14 @@ PYBIND11_MODULE(ENGINE, m) {
         .def("logical_not", &dumpy::logical_not, py::return_value_policy::reference)
         .def("exp", &dumpy::exp, py::return_value_policy::reference)
         .def("log", &dumpy::log, py::return_value_policy::reference);
+
+    py::class_<TensorData>(m, "TensorData")
+        .def_readwrite("data", &TensorData::data)
+        .def_readwrite("size", &TensorData::size)
+        .def_readwrite("ndim", &TensorData::ndim)
+        .def_readwrite("stride", &TensorData::stride);
+    
+    py::class_<sytorch>(m, "sytorch")
+        .def(py::init<>())
+        .def("tensor", &sytorch::tensor, py::return_value_policy::reference);
 }
