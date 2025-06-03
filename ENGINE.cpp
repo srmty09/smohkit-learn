@@ -335,6 +335,7 @@ struct TensorData {
     ll size;
     vector<ll> stride;
     ll ndim;
+    vector<ll> shape;
 };
 
 class sytorch {
@@ -365,10 +366,64 @@ public:
         tensor_ptr->size = total_elements;
         tensor_ptr->stride = stride_vec;
         tensor_ptr->ndim = shape_vec.size();
+        tensor_ptr->shape=shape_vec;
         tensor_ptrs.push_back(tensor_ptr);
+      
         
         return tensor_ptr;
     }
+   TensorData* reshape(TensorData* a, vector<ll> shape){
+      shape_vec=shape;
+      total_elements=1;
+      for(auto i: shape_vec){
+        total_elements*=i;
+      }
+      if(total_elements!=a->size){
+        cout<<"can't be reshaped"<<endl;
+        return a;
+      }
+      else{
+      calculate_strides();
+      a->stride=stride_vec;
+      a->shape=shape_vec;
+    }
+    return a;
+   } 
+  TensorData* copy(TensorData* a){
+      TensorData* copyT=new TensorData();
+      copyT->data=a->data;
+      copyT->size=a->size;
+      copyT->stride=a->stride;
+      copyT->shape=a->shape;
+      copyT->ndim=a->ndim;
+      tensor_ptrs.push_back(copyT);
+      return copyT;
+   }
+void Mul(TensorData* a, TensorData* b) {
+    ll k = 0;
+    ll i = 0;
+    ll j = 0;
+    vector<double>& first_matrix = *(a->data);
+    vector<double>& second_matrix = *(b->data);
+    
+    ll rows_a = a->size / a->stride[0];
+    ll cols_a = a->stride[0];
+    ll cols_b = b->stride[0];
+    
+    while(k < rows_a) {
+        j = 0;
+        while(j < cols_b) {
+            i = 0;
+            while(i < cols_a) {
+                cout << first_matrix[k * cols_a + i] << " X " << second_matrix[i * cols_b + j] << endl;
+                i++;
+            }
+            j++;
+        }
+        k++;
+    }
+}
+
 
 private:
     void extract_data_and_shape(const py::object& obj, vector<double>& data, 
@@ -450,9 +505,13 @@ PYBIND11_MODULE(ENGINE, m) {
         .def_readwrite("data", &TensorData::data)
         .def_readwrite("size", &TensorData::size)
         .def_readwrite("ndim", &TensorData::ndim)
+        .def_readwrite("shape",&TensorData::shape)
         .def_readwrite("stride", &TensorData::stride);
     
     py::class_<sytorch>(m, "sytorch")
         .def(py::init<>())
+        .def("reshape",&sytorch::reshape)
+        .def("copy",&sytorch::copy)
+        .def("mul",&sytorch::Mul)
         .def("tensor", &sytorch::tensor, py::return_value_policy::reference);
 }
