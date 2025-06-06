@@ -368,8 +368,6 @@ public:
         tensor_ptr->ndim = shape_vec.size();
         tensor_ptr->shape=shape_vec;
         tensor_ptrs.push_back(tensor_ptr);
-      
-        
         return tensor_ptr;
     }
    TensorData* reshape(TensorData* a, vector<ll> shape){
@@ -399,31 +397,132 @@ public:
       tensor_ptrs.push_back(copyT);
       return copyT;
    }
-void Mul(TensorData* a, TensorData* b) {
-    ll k = 0;
-    ll i = 0;
-    ll j = 0;
+
+TensorData Mat_Mul(TensorData* a, TensorData* b) {
     vector<double>& first_matrix = *(a->data);
     vector<double>& second_matrix = *(b->data);
+    vector<ll> a_shape = a->shape;
+    vector<ll> b_shape = b->shape;
     
-    ll rows_a = a->size / a->stride[0];
-    ll cols_a = a->stride[0];
-    ll cols_b = b->stride[0];
-    
-    while(k < rows_a) {
-        j = 0;
-        while(j < cols_b) {
-            i = 0;
-            while(i < cols_a) {
-                cout << first_matrix[k * cols_a + i] << " X " << second_matrix[i * cols_b + j] << endl;
-                i++;
-            }
-            j++;
-        }
-        k++;
+    if(a_shape.size() != b_shape.size()) {
+        cout << "can't do matrix multiplication" << endl;
+        TensorData empty;
+        empty.data = new vector<double>();
+        empty.shape = {};
+        return empty;
     }
+    
+    ll n = a_shape.size();
+    ll rows_a = a_shape[n-2];
+    ll cols_a = a_shape[n-1];
+    ll rows_b = b_shape[n-2];
+    ll cols_b = b_shape[n-1];
+    
+    if (cols_a != rows_b) {
+        throw invalid_argument("Incompatible matrix dimensions for multiplication.");
+    }
+    
+    // Calculate result shape and total size
+    vector<ll> result_shape = a_shape;
+    result_shape[n-2] = rows_a;
+    result_shape[n-1] = cols_b;
+    
+    ll total_size = 1;
+    for(ll dim : result_shape) total_size *= dim;
+    
+    auto result_vec = new vector<double>(total_size, 0.0);
+    
+    // Calculate batch size (all dimensions except last 2)
+    ll batch_size = 1;
+    for(ll i = 0; i < n-2; i++) {
+        batch_size *= a_shape[i];
+    }
+    
+    // Recursive multiplication function
+    function<void(ll, ll, ll, ll)> multiply_batch = [&](ll batch_idx, ll a_offset, ll b_offset, ll result_offset) {
+        if(batch_idx == n-2) {
+            // Base case: perform 2D matrix multiplication
+            for (ll i = 0; i < rows_a; ++i) {
+                for (ll j = 0; j < cols_b; ++j) {
+                    double sum = 0.0;
+                    for (ll k = 0; k < cols_a; ++k) {
+                        sum += first_matrix[a_offset + i * cols_a + k] * 
+                               second_matrix[b_offset + k * cols_b + j];
+                    }
+                    (*result_vec)[result_offset + i * cols_b + j] = sum;
+                }
+            }
+            return;
+        }
+        
+        // Recursive case: iterate through current dimension
+        ll current_dim_size = a_shape[batch_idx];
+        ll a_stride = 1, b_stride = 1, result_stride = 1;
+        
+        // Calculate strides for remaining dimensions
+        for(ll i = batch_idx + 1; i < n; i++) {
+            a_stride *= a_shape[i];
+            b_stride *= b_shape[i];
+            result_stride *= result_shape[i];
+        }
+        
+        for(ll i = 0; i < current_dim_size; i++) {
+            multiply_batch(batch_idx + 1, 
+                          a_offset + i * a_stride,
+                          b_offset + i * b_stride, 
+                          result_offset + i * result_stride);
+        }
+    };
+    
+    // Start recursive multiplication
+    multiply_batch(0, 0, 0, 0);
+    
+    TensorData result;
+    result.data = result_vec;
+    result.shape = result_shape;
+    return result;
 }
-
+void print(TensorData *a) {
+    vector<double>& matrix = *(a->data);
+    vector<ll>& shape = a->shape;
+    ll k = 0;
+    
+    function<void(ll)> print_dim = [&](ll dim) {
+        if (dim == shape.size() - 1) {
+            ll count_col = 0;
+            cout << "[";
+            while(count_col < shape[dim]) {
+                if(shape[dim] - count_col > 1) {
+                    cout << matrix[k] << ", ";
+                    count_col++;
+                    k++;
+                } else {
+                    cout << matrix[k];
+                    count_col++;
+                    k++;
+                }
+            }
+            cout << "] ";
+            return;
+        }
+        
+        ll count_row = 0;
+        cout << "[";
+        while(count_row < shape[dim]) {
+            print_dim(dim + 1);
+            if(shape[dim] - count_row > 1) {
+                if(dim == 0) cout << "," << endl;  
+                count_row++;
+            } else {
+                count_row++;
+            }
+        }
+        cout << "]";
+    };
+    
+    print_dim(0);
+    cout << endl;
+}
 
 private:
     void extract_data_and_shape(const py::object& obj, vector<double>& data, 
@@ -512,6 +611,8 @@ PYBIND11_MODULE(ENGINE, m) {
         .def(py::init<>())
         .def("reshape",&sytorch::reshape)
         .def("copy",&sytorch::copy)
-        .def("mul",&sytorch::Mul)
+        .def("mat_mul",&sytorch::Mat_Mul)
+        .def("print",&sytorch::print)
         .def("tensor", &sytorch::tensor, py::return_value_policy::reference);
+        
 }
